@@ -9,24 +9,26 @@ class Connection:
     def __init__(self,app):
         self.server = None
         self.App = app
+        self.websocket = None
     
-    def setclipboard(self,msg):
-        self.App.GUI.root.clipboard_append(msg)
-        self.App.GUI.root.update()
-        print("set the clipboard")
 
     
     async def echo(self,websocket):
+        # if already a device is not connected then accept the connection otherwise reject it 
         if not utils.is_connected:
             utils.is_connected = True;
             Log_queue.put(f"| [{datetime.datetime.now()}] Device connected...")
-            async for message in websocket:
-                Log_queue.put(f"| [{datetime.datetime.now()}] Message [\"{message}\"]")
-                message = message.split(",")
-                if message[0] =="Clip":
-                    self.setclipboard(message[1])
-
-
+            self.websocket = websocket;
+            try:
+                async for message in websocket:
+                    Log_queue.put(f"| [{datetime.datetime.now()}] Message [\"{message}\"]")
+            except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError) as e:
+            # Client intentionally closed or disappeared
+                Log_queue.put(f"| [{datetime.datetime.now()}] Client disconnected: {e}")
+            finally:
+                utils.is_connected = False
+                Log_queue.put(f"| [{datetime.datetime.now()}] Device connection closed")
+                        
         else: 
             await websocket.send("already another device connected")
             websocket.close(4000,reason="already another device connected")     

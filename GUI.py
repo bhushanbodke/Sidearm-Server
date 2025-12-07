@@ -3,8 +3,10 @@ import tkinter as tk
 from tkinter import scrolledtext
 from log import Log_queue
 import utils
-import sys
 import discovery
+import asyncio
+
+
 class ServerUI:
     def __init__(self,app):
         self.root = tk.Tk()
@@ -38,13 +40,15 @@ class ServerUI:
             if (current_content):
                 if current_content != utils.old_clip:
                     utils.old_clip = current_content
-                    print(current_content)
+                    asyncio.run_coroutine_threadsafe(
+                        self.App.Connection.websocket.send(utils.old_clip),
+                        self.App.loop)
         except:
             print("NOTHING in clipboard")
 
         self.root.after(1000, self.monitor_clip)
         
-    def update(self):
+    def update(self):   
         if not utils.is_connected:
             #broadcast the websocket port and ip to enable discovery
             discovery.send_udp(); 
