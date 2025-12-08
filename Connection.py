@@ -18,6 +18,7 @@ class Connection:
         if not utils.is_connected:
             utils.is_connected = True;
             Log_queue.put(f"| [{datetime.datetime.now()}] Device connected...")
+            await websocket.send(f"ftp,{utils.ip_address},{utils.ftp["port"]},{utils.ftp["name"]},{utils.ftp["pass"]}")
             self.websocket = websocket;
             try:
                 async for message in websocket:
